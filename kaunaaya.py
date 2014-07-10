@@ -60,10 +60,6 @@ class KaunAaya():
         sq = (value*(idx**2) for idx, value in enumerate(h))
         sum_of_squares = sum(sq)
         rms = math.sqrt(sum_of_squares/float(image1.size[0] * image1.size[1]))
-        #h1 = image1.histogram()
-        #h2 = image2.histogram()
-        #Need to understand this?
-        #rms = math.sqrt(reduce(operator.add, map(lambda a,b: (a-b)**2, h1, h2))/len(h1))
 
         logging.info("RMS [" + str(rms) + "]")
         
