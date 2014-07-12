@@ -22,31 +22,31 @@ logging.basicConfig(format = '%(asctime)s %(levelname)s %(message)s', level=logg
 class KaunAaya():
 
     def __init__(self):
-        self.p = PushBullet(PUSH_BULLET_API_KEY)
+        self.pushbulletClient = PushBullet(PUSH_BULLET_API_KEY)
+        self.dropboxClient = dropbox.client.DropboxClient(DROPBOX_ACCESS_KEY)
         self.clickPicture = False
         self.prevPhoto = ""
         self.startCameraThread = None
 
     def uploadPhoto(self, file):
         logging.info("Uploading " + str(file) + " to dropbox..")
-        client = dropbox.client.DropboxClient(DROPBOX_ACCESS_KEY)
-        logging.info("Account Details: " + str(client.account_info()))
+        logging.info("Account Details: " + str(self.dropboxClient.account_info()))
 
         while(os.path.isfile(file) == False):
             logging.info("File [" + str(file) +"] not present")
             time.sleep(5)          
             
-        f = open(file, "rb")
-        size = os.fstat(f.fileno()).st_size
-        uploader = client.get_chunked_uploader(f, size)
-        logging.info("Uploading: " + str(size))
-        while uploader.offset < size:
-            try:
-                upload = uploader.upload_chunked(1024 * 20)
-            except rest.ErrorResponse, e:
-                logging.info("Exception [" + str(e) + "]")
-        uploader.finish("/" + file)    
-        logging.info("Finished uploading: " + str(file))
+        with open(file, "rb") as f:
+	    size = os.fstat(f.fileno()).st_size
+	    uploader = self.dropboxClient.get_chunked_uploader(f, size)
+            logging.info("Uploading: " + str(size))
+            while uploader.offset < size:
+                try:
+                    upload = uploader.upload_chunked(1024 * 20)
+                except rest.ErrorResponse, e:
+                    logging.info("Exception [" + str(e) + "]")
+            uploader.finish("/" + file)    
+            logging.info("Finished uploading: " + str(file))
 
     def compare(self, prevPhoto, newPhoto):
         if not prevPhoto:
@@ -109,7 +109,7 @@ class KaunAaya():
         if data["subtype"] != "push":
             return
 
-        history = self.p.getPushHistory()
+        history = self.pushbulletClient.getPushHistory()
         if history is None or history[0] is None:
             return
 
@@ -147,7 +147,7 @@ class KaunAaya():
         self.startCameraThread.start()
         logging.info("Starting camera thread started..")
         logging.info("Listening for messages from PushBullet...")
-        self.p.realtime(self.callback)
+        self.pushbulletClient.realtime(self.callback)
 
 def main():
     logging.info("======= Starting Kaun Aaya ============")
