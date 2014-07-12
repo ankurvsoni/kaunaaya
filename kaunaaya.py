@@ -10,6 +10,7 @@ import logging
 from pushbullet import PushBullet
 from PIL import Image
 from PIL import ImageChops
+from dropbox import rest
 
 CONFIG = ConfigParser.ConfigParser()
 CONFIG.read("defaults.cfg")
@@ -43,11 +44,9 @@ class KaunAaya():
             try:
                 upload = uploader.upload_chunked(1024 * 20)
             except rest.ErrorResponse, e:
-                logging.info("Exception!")
+                logging.info("Exception [" + str(e) + "]")
         uploader.finish("/" + file)    
         logging.info("Finished uploading: " + str(file))
-        #response = client.put_file("/" + file, f)
-        #print "Finished uploading file: ", response
 
     def compare(self, prevPhoto, newPhoto):
         if not prevPhoto:
@@ -58,8 +57,8 @@ class KaunAaya():
         diff = ImageChops.difference(image1, image2)
         h = diff.histogram()
         sq = (value*(idx**2) for idx, value in enumerate(h))
-        sum_of_squares = sum(sq)
-        rms = math.sqrt(sum_of_squares/float(image1.size[0] * image1.size[1]))
+        sumOfSquares = sum(sq)
+        rms = math.sqrt(sumOfSquares/float(image1.size[0] * image1.size[1]))
 
         logging.info("RMS [" + str(rms) + "]")
         
@@ -142,7 +141,7 @@ class KaunAaya():
             logging.info("Unknown event received [" + str(title) + "]")
 
 
-    def listen(self):
+    def startApp(self):
         logging.info("Starting camera thread..")
         self.startCameraThread = threading.Thread(target=self.startCamera)
         self.startCameraThread.start()
@@ -153,7 +152,7 @@ class KaunAaya():
 def main():
     logging.info("======= Starting Kaun Aaya ============")
     k = KaunAaya()
-    k.listen()
+    k.startApp()
 
 if __name__=="__main__":
     main()
